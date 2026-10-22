@@ -1,0 +1,5 @@
+id = "pagination-off-by-one"
+title = "First page of results skips items"
+category = "off-by-one"
+request = "The orders list is missing the first 10 orders: page 1 starts at the 11th item. Pages are 1-based. Fix paginate() so page 1 returns the first per_page items and a page past the end returns an empty list."
+expected_files = ["app/pagination.py"]

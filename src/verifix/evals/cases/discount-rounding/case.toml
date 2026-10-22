@@ -1,0 +1,5 @@
+id = "discount-rounding"
+title = "Discounted prices are a cent too low"
+category = "numeric"
+request = "apply_discount truncates fractions of a cent, so 995 cents at 15% off returns 845 instead of 846. Round to the nearest cent, with halves rounding up (e.g. 50 cents at 95% off is 2.5 cents -> 3)."
+expected_files = ["app/pricing.py"]

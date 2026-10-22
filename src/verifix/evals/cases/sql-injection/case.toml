@@ -1,0 +1,5 @@
+id = "sql-injection"
+title = "User search is vulnerable to SQL injection"
+category = "security"
+request = "Security: find_users builds its SQL with string formatting. Searching for x' OR '1'='1 returns every user, and a legitimate name like O'Brien crashes. Use a parameterised query; behaviour for normal names must not change."
+expected_files = ["app/users.py"]

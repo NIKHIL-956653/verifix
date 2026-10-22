@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "verifix"
+version = "0.1.0"
+description = "Evidence-driven AI software engineer agent: investigates, patches and verifies changes in real repositories."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.159,<1",
+  "uvicorn[standard]>=0.54",
+  "pydantic>=2.9",
+  "pydantic-settings>=2.16",
+  "sqlalchemy[asyncio]>=2.1,<2.2",
+  "asyncpg>=0.32",
+  "alembic>=1.20",
+  "structlog>=26.1",
+  "anthropic>=2.1,<3",
+  "httpx2>=2.16",  # imported directly by the Anthropic adapter (SDK 2.x transport)
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=9.1",
+  "pytest-asyncio>=1.4",
+  "httpx>=0.28",
+  "ruff>=0.17",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/verifix"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-ra --strict-markers"
+markers = [
+  "db: needs the Postgres from docker-compose (skipped with a clear reason when it is down)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# S = flake8-bandit security checks. This project runs other people's code and
+# handles credentials, so security lints are on from the first commit.
+select = ["E", "F", "W", "I", "B", "UP", "S", "ASYNC", "RUF"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106", "S108", "S311", "S603", "S607", "E501", "ASYNC240"]  # test-only patterns
+"alembic/**" = ["E501"]

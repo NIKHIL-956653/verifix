@@ -1,0 +1,5 @@
+id = "swallowed-exception"
+title = "CSV import silently drops bad rows"
+category = "error-handling"
+request = "import_rows() silently drops rows whose amount is not a number, so users never learn their import was incomplete. Keep importing the good rows, but record each bad row in result.errors as (row_number, message), with row numbers starting at 1."
+expected_files = ["app/importer.py"]

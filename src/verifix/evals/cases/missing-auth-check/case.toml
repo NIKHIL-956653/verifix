@@ -1,0 +1,5 @@
+id = "missing-auth-check"
+title = "Any user can delete other users' documents"
+category = "authorization"
+request = "Security bug: delete_document lets any logged-in user delete any document. Only the document's owner or an admin may delete it; anyone else must get PermissionDenied and the document must stay."
+expected_files = ["app/documents.py"]

@@ -1,0 +1,5 @@
+id = "date-range-inclusive"
+title = "Monthly report misses the last day"
+category = "boundary"
+request = "The March report (1 March to 31 March) is missing every order placed on 31 March. orders_between(start, end) must include orders on both the start and the end date."
+expected_files = ["app/reports.py"]

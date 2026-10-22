@@ -1,0 +1,5 @@
+id = "mutable-default"
+title = "Items leak between customers' carts"
+category = "state"
+request = "Customers report seeing items they never added: a new cart created with add_item() already contains another customer's items. Each call without an explicit cart must start from an empty cart."
+expected_files = ["app/cart.py"]
