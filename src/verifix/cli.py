@@ -101,17 +101,18 @@ async def _eval(args: argparse.Namespace) -> int:
         from verifix.wiring import build_llm
 
         sm = get_sessionmaker()
-        base_llm = build_llm(settings) if args.mode != "replay" else None
         cassettes = Path(args.cassettes) if args.cassettes else None
 
+        # A fresh client per case: each gets its own retry budget and circuit breaker,
+        # so one case's provider outage cannot fail every case after it.
         def llm_for(case):  # type: ignore[no-untyped-def]
             if args.mode == "replay":
                 assert cassettes is not None  # noqa: S101 - checked above
                 return ReplayLLM(cassettes / f"{case.id}.jsonl")
             if args.mode == "record":
                 assert cassettes is not None  # noqa: S101
-                return RecordingLLM(base_llm, cassettes / f"{case.id}.jsonl")
-            return base_llm
+                return RecordingLLM(build_llm(settings), cassettes / f"{case.id}.jsonl")
+            return build_llm(settings)
 
         from verifix.agent.policy import Budget
 

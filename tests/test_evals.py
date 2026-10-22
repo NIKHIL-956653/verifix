@@ -34,9 +34,9 @@ from verifix.sandbox.docker import DockerSandbox
 
 def test_cases_are_well_formed() -> None:
     cases = load_cases()
-    assert len(cases) == 8
-    assert len({c.id for c in cases}) == 8
-    assert len({c.category for c in cases}) >= 7
+    assert len(cases) == 12
+    assert len({c.id for c in cases}) == 12
+    assert len({c.category for c in cases}) >= 11
     for c in cases:
         assert c.request and c.expected_files
         assert c.hidden_files() and all(h.startswith(HIDDEN_PREFIX) for h in c.hidden_files())
@@ -290,7 +290,7 @@ async def test_evals_api(api, db_sessionmaker) -> None:  # type: ignore[no-untyp
     api.app.state.eval_sessionmaker = db_sessionmaker
 
     cases = (await api.get("/evals/cases")).json()
-    assert len(cases) == 8 and "test_verifix_hidden" not in str(cases)
+    assert len(cases) == 12 and "test_verifix_hidden" not in str(cases)
 
     r = await api.post("/evals", json={"solver": "agent"})
     assert r.status_code == 422 and "confirm_cost" in r.text

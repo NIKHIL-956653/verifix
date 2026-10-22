@@ -17,14 +17,13 @@
   runtime and dependency images, exit-code status.
 - **M6 Review**: findings with severity, location, recommendation; "confirmed" requires a
   failing test.
-- **M7 Benchmark**: 8 cases, grader, metrics, record/replay, CLI, API, dashboard; ruler validated.
+- **M7 Benchmark**: 12 cases, grader, metrics, record/replay, CLI, API, dashboard; ruler validated.
 - **M8 GitHub**: import by URL, draft PR from source_head + patch, CI checks.
 - **M9**: React UI (tasks, approvals, timeline, evidence sheet, diff, report, repos,
   benchmark) and these docs.
 
 ## Next
 
-- Record a live-model benchmark run and publish it in EVALUATION.md.
 - Grow the benchmark to 20–30 cases; add fault injection.
 - JavaScript/TypeScript test runner in the sandbox.
 - Streamed model output in the timeline.

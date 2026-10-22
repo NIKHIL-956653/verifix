@@ -1,0 +1,5 @@
+id = "filter-after-pagination"
+title = "Filtered search pages are short and skip matching rows"
+category = "ordering"
+request = "When users filter orders by status, page 1 often shows fewer than `limit` rows, and some matching orders never appear on any page. Unfiltered search is fine. Matching rows must fill each page and none may be skipped."
+expected_files = ["app/search.py"]

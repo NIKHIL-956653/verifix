@@ -25,9 +25,15 @@ The agent is measured, not demoed.
 | date-range-inclusive | boundary |
 | mutable-default | shared state |
 | sql-injection | security (parameterised query; `O'Brien` must still work) |
+| csv-export-escaping | escaping (RFC 4180; the fix spans two files) |
+| rate-limit-stale-window | stale state (vague report: "users blocked on their first request of the day") |
+| free-shipping-units | unit mismatch (cents vs dollars across two modules) |
+| filter-after-pagination | operation ordering (filter applied after slicing) |
 
 Each case: a buggy repo whose visible tests pass, hidden tests the agent never sees, a
-request written like a user's bug report, and a reference fix.
+request written like a user's bug report, and a reference fix. The last four are a
+harder tier (multi-file fixes, vaguer reports) added after the first live run, which
+covered only the original eight.
 
 ## Metrics
 
@@ -69,16 +75,54 @@ This shows the benchmark catches an overconfident agent: verifix's own reconcili
 can only check that tests ran and passed; the hidden tests show the fix was wrong. The
 same run replayed from its cassettes gives identical results.
 
-### Live model
+### First live run and a case correction — 22 Oct 2026
 
-Not yet run. Record one with:
+The first live run (Sonnet 5.5, `login-missing-email` only, $0.06) was graded "not
+solved / false verified": the agent fixed the missing-email case the report described,
+but the hidden tests also required rejecting a blank email (`"   "`), which the request
+never mentioned. That was a benchmark defect, not an agent one — hidden tests must only
+check what the request asks for. The case's request now names the blank-email
+requirement too. Recorded here because changing a case invalidates comparisons with runs
+made before the change.
 
-```
-python -m verifix eval --solver agent --mode record --cassettes evals/cassettes/<name> --confirm-cost --out reports/<name>.json --save
-```
+### First live run (original 8 cases) — 22 Oct 2026
 
-Results will be added here with the commit, model, date and cost. Nothing is reported
-here that a run did not produce.
+Model `claude-sonnet-5-5`, fully autonomous, recorded to `evals/cassettes/run1`
+(eval run `f0b01ffc`, `reports/run1.json`), on a Windows 11 machine with Docker
+Desktop: **8/8 solved, 0 regressions, 0 false "verified", patch precision 1.0,
+evidence coverage 1.0, $0.40 total, 24 s per case.**
+
+An earlier attempt at this run failed 6 of 8 cases with "model provider unavailable":
+one case hit a network failure reaching Anthropic, and the shared client's circuit
+breaker stayed open for every case after it (total spend $0.09, since the dead cases
+spent nothing). Fixed by giving each benchmark case its own client, so a breaker trip
+cannot outlive the case that caused it. One side-finding from that broken run: the agent
+had already written a correct fix for `discount-rounding` before the connection died, and
+the grader scored the patch "solved" even though the agent's own status was `failed` —
+the grader really does judge only the patch.
+
+### Two models, all 12 cases — 22 Oct 2026
+
+Fully autonomous, the same 12 cases (including the harder tier), recorded to
+`evals/cassettes/haiku1` and `run2` (eval runs `cba15fee` and `2b2b522f`).
+
+| Metric | claude-haiku-5-5 | claude-sonnet-5-5 |
+|---|---|---|
+| Success rate | **12 / 12** | **12 / 12** |
+| Regressions | 0 | 0 |
+| False "verified" | 0 | 0 |
+| Patch precision | 0.958 (one case touched an extra file) | 1.0 |
+| Evidence coverage | 1.0 | 1.0 |
+| Tool reliability | 0.861 (fumbled tool calls, recovered) | 0.984 |
+| Total cost | **$0.06** | **$0.64** |
+| Mean time per case | 29 s | 25 s |
+
+Reading, honestly: both models saturate this benchmark, so it no longer separates
+them on success rate — only on cost, patch tidiness and tool reliability, where the
+10x-cheaper Haiku is messier but still lands every fix. The bugs are 1-2 file fixes
+with reports that name the failure; the benchmark needs a genuinely hard tier (larger
+repos, misleading reports, bugs the visible tests don't hint at) before a 100% here
+can mean "ready for real work". That is the top item under Next.
 
 ## Next
 

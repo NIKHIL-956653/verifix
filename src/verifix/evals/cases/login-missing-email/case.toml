@@ -1,5 +1,5 @@
 id = "login-missing-email"
 title = "Login crashes when the email field is missing"
 category = "input-validation"
-request = "POST /login returns HTTP 500 when the request body has no \"email\" field. It should raise LoginError(\"email required\") instead, like the missing-password case does."
+request = "POST /login returns HTTP 500 when the request body has no \"email\" field. A missing email, and also a blank one like \"   \", should raise LoginError(\"email required\") instead, like the missing-password case does."
 expected_files = ["app/auth.py"]

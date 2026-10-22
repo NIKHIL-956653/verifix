@@ -322,3 +322,21 @@ async def test_runtime_image_required_when_base_lacks_pytest(tmp_path: Path) -> 
     ok = DockerSandbox(base_image=SANDBOX_IMAGE)
     env2 = await ok.ensure_environment(proj, allow_install=False)
     assert env2.ok and env2.image == SANDBOX_IMAGE
+
+
+async def test_runtime_image_is_enough_without_the_base_image(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """BuildKit (Docker Desktop) does not keep the FROM image as a local tag, so after
+    setup-sandbox only verifix-runtime exists. That must be enough to run tests."""
+    sb = DockerSandbox(base_image="python:3.12-slim")
+    present = {sb.runtime_tag}
+    monkeypatch.setattr(sb, "available", lambda: (True, "29"))
+    monkeypatch.setattr(sb, "_image_exists", lambda tag: tag in present)
+    env = await sb.ensure_environment(tmp_path, allow_install=False)
+    assert env.ok and env.image == sb.runtime_tag
+
+    present.clear()
+    monkeypatch.setattr(sb, "_has_pytest", lambda image: False)
+    env = await sb.ensure_environment(tmp_path, allow_install=False)
+    assert not env.ok and "setup-sandbox" in (env.limitation or "")

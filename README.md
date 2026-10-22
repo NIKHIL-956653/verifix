@@ -22,7 +22,7 @@ a passing sandbox test run recorded after the last code change.
 | **Approvals** | Plans, file edits and dependency installs can each require your approval (diff preview) |
 | **Sandbox** | Tests run with `--network none`, read-only filesystem, non-root, CPU/memory/PID limits, timeout |
 | **Hand-off** | Apply to your checkout (conflict-checked), download the patch, or open a draft GitHub PR |
-| **Benchmark** | 8 seeded-bug repos with hidden tests; measures success, regressions, false "verified", cost |
+| **Benchmark** | 12 seeded-bug repos with hidden tests; measures success, regressions, false "verified", cost |
 
 ## Status
 
@@ -35,7 +35,7 @@ a passing sandbox test run recorded after the last code change.
 | M4 Patch, diff, approvals | Done |
 | M5 Sandboxed tests | Done |
 | M6 Code review | Done |
-| M7 Reliability benchmark | Done: harness, 8 cases, ruler validated. Live-model results not recorded yet |
+| M7 Reliability benchmark | Done. Live runs: Sonnet 5.5 **12/12 ($0.64)**, Haiku 5.5 **12/12 ($0.06)**, 0 regressions, 0 false "verified" — [details](docs/EVALUATION.md) |
 | M8 GitHub | Done: import by URL, draft PR, CI checks |
 | M9 UI + docs | Done |
 

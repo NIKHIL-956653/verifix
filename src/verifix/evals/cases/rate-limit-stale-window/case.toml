@@ -1,0 +1,5 @@
+id = "rate-limit-stale-window"
+title = "Users stay rate-limited long after they stopped sending requests"
+category = "stale-state"
+request = "Support keeps hearing from users who get 'rate limited' on their very first request of the day. The limiter should give each user a fresh allowance of `limit` requests every `window_s` seconds, and must still block within a window once the limit is hit."
+expected_files = ["app/ratelimit.py"]

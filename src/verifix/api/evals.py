@@ -156,12 +156,13 @@ async def start_run(
     else:
         from verifix.agent.policy import Budget
 
-        llm = _llm(request, settings)
         solver = AgentSolver(
             sessionmaker=sm,
             settings=settings,
             sandbox=sandbox,
-            llm_for=lambda _case: llm,
+            # A fresh client per case (unless a test injected one): its retry budget and
+            # circuit breaker then cannot carry one case's outage into the next.
+            llm_for=lambda _case: _llm(request, settings),
             budget=Budget(
                 max_model_calls=30, max_cost_usd=body.max_cost_usd_per_case, max_minutes=10
             ),

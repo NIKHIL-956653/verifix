@@ -1,0 +1,5 @@
+id = "csv-export-escaping"
+title = "Exported CSV breaks when fields contain commas or quotes"
+category = "escaping"
+request = "Customers say our CSV exports open wrong in Excel: when a product name contains a comma or a quote, the columns shift. Fields containing commas, quotes or newlines must be quoted per RFC 4180 (inner quotes doubled); plain fields must stay unquoted and existing exports of plain data must not change."
+expected_files = ["app/csv_utils.py", "app/export.py"]

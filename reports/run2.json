@@ -1,0 +1,756 @@
+{
+  "solver": "agent",
+  "summary": {
+    "cases": 12,
+    "successes": 12,
+    "success_rate": 1.0,
+    "patch_applies_rate": 1.0,
+    "cases_with_regressions": 0,
+    "mean_patch_precision": 1.0,
+    "mean_evidence_coverage": 1.0,
+    "tool_reliability": 0.984,
+    "claimed_verified": 12,
+    "false_verified": 0,
+    "verified_precision": 1.0,
+    "total_cost_usd": 0.6395,
+    "mean_duration_s": 25.13,
+    "by_category": {
+      "authorization": 1,
+      "boundary": 1,
+      "error-handling": 1,
+      "escaping": 1,
+      "input-validation": 1,
+      "numeric": 1,
+      "off-by-one": 1,
+      "ordering": 1,
+      "security": 1,
+      "stale-state": 1,
+      "state": 1,
+      "units": 1
+    }
+  },
+  "results": [
+    {
+      "case_id": "csv-export-escaping",
+      "category": "escaping",
+      "grade": {
+        "case_id": "csv-export-escaping",
+        "patch_applies": true,
+        "hidden_passed": true,
+        "success": true,
+        "regressions": [],
+        "changed_files": [
+          "app/csv_utils.py",
+          "app/export.py",
+          "tests/test_export.py"
+        ],
+        "source_files_changed": [
+          "app/csv_utils.py",
+          "app/export.py"
+        ],
+        "patch_precision": 1.0,
+        "hidden_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 4,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 670,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider tests/test_verifix_hidden.py",
+          "limitation": null,
+          "output_tail": "....                                                                     [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_verifix_hidden.py::test_comma_stays_one_field\nPASSED tests/test_verifix_hidden.py::test_inner_quotes_doubled\nPASSED tests/test_verifix_hidden.py::test_newline_inside_field\nPASSED tests/test_verifix_hidden.py::test_plain_fields_stay_unquoted\n4 passed in 0.07s\n"
+        },
+        "suite_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 8,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 706,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider",
+          "limitation": null,
+          "output_tail": "........                                                                 [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_export.py::test_plain_rows\nPASSED tests/test_export.py::test_escape_special_fields\nPASSED tests/test_export.py::test_export_escapes_fields\nPASSED tests/test_export.py::test_plain_field_unchanged\nPASSED tests/test_verifix_hidden.py::test_comma_stays_one_field\nPASSED tests/test_verifix_hidden.py::test_inner_quotes_doubled\nPASSED tests/test_verifix_hidden.py::test_newline_inside_field\nPASSED tests/test_verifix_hidden.py::test_plain_fields_stay_unquoted\n8 passed in 0.12s\n"
+        },
+        "note": ""
+      },
+      "solve": {
+        "patch": "diff --git a/app/csv_utils.py b/app/csv_utils.py\nindex 61edec3..17bf718 100644\n--- a/app/csv_utils.py\n+++ b/app/csv_utils.py\n@@ -2,8 +2,7 @@\n \n \n def escape_field(value) -> str:\n-    # BUG: only handles commas, and inner quotes are not doubled.\n     text = str(value)\n-    if \",\" in text:\n-        return '\"' + text + '\"'\n+    if any(c in text for c in (\",\", '\"', \"\\n\", \"\\r\")):\n+        return '\"' + text.replace('\"', '\"\"') + '\"'\n     return text\ndiff --git a/app/export.py b/app/export.py\nindex 9f5fb1e..c0da70e 100644\n--- a/app/export.py\n+++ b/app/export.py\n@@ -1,6 +1,7 @@\n \"\"\"Build CSV exports.\"\"\"\n \n+from app.csv_utils import escape_field\n+\n \n def export_rows(rows: list[list]) -> str:\n-    # BUG: joins raw values and never escapes them.\n-    return \"\\n\".join(\",\".join(str(v) for v in row) for row in rows)\n+    return \"\\n\".join(\",\".join(escape_field(v) for v in row) for row in rows)\ndiff --git a/tests/test_export.py b/tests/test_export.py\nindex 61c1179..be81805 100644\n--- a/tests/test_export.py\n+++ b/tests/test_export.py\n@@ -6,5 +6,16 @@ def test_plain_rows():\n     assert export_rows([[\"a\", 1], [\"b\", 2]]) == \"a,1\\nb,2\"\n \n \n+def test_escape_special_fields():\n+    assert escape_field('a,b') == '\"a,b\"'\n+    assert escape_field('say \"hi\"') == '\"say \"\"hi\"\"\"'\n+    assert escape_field(\"a\\nb\") == '\"a\\nb\"'\n+    assert escape_field(\"a\\rb\") == '\"a\\rb\"'\n+\n+\n+def test_export_escapes_fields():\n+    assert export_rows([['Widget, \"XL\"', 1]]) == '\"Widget, \"\"XL\"\"\",1'\n+\n+\n def test_plain_field_unchanged():\n     assert escape_field(\"abc\") == \"abc\"\n",
+        "agent_status": "verified",
+        "evidence_coverage": 1.0,
+        "model_calls": 6,
+        "tool_calls": 13,
+        "tool_errors": 0,
+        "input_tokens": 15136,
+        "output_tokens": 1920,
+        "cost_usd": 0.0642,
+        "duration_s": 27.37723160011228,
+        "task_id": "95547a7f-a3b5-43c2-85fa-cda90c0ee65d",
+        "error": null
+      },
+      "false_verified": false,
+      "success": true
+    },
+    {
+      "case_id": "date-range-inclusive",
+      "category": "boundary",
+      "grade": {
+        "case_id": "date-range-inclusive",
+        "patch_applies": true,
+        "hidden_passed": true,
+        "success": true,
+        "regressions": [],
+        "changed_files": [
+          "app/reports.py",
+          "tests/test_reports.py"
+        ],
+        "source_files_changed": [
+          "app/reports.py"
+        ],
+        "patch_precision": 1.0,
+        "hidden_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 3,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 1051,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider tests/test_verifix_hidden.py",
+          "limitation": null,
+          "output_tail": "...                                                                      [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_verifix_hidden.py::test_both_ends_inclusive\nPASSED tests/test_verifix_hidden.py::test_single_day\nPASSED tests/test_verifix_hidden.py::test_reversed_range_rejected\n3 passed in 0.26s\n"
+        },
+        "suite_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 5,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 702,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider",
+          "limitation": null,
+          "output_tail": ".....                                                                    [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_reports.py::test_orders_between_includes_start_and_end\nPASSED tests/test_reports.py::test_revenue\nPASSED tests/test_verifix_hidden.py::test_both_ends_inclusive\nPASSED tests/test_verifix_hidden.py::test_single_day\nPASSED tests/test_verifix_hidden.py::test_reversed_range_rejected\n5 passed in 0.14s\n"
+        },
+        "note": ""
+      },
+      "solve": {
+        "patch": "diff --git a/app/reports.py b/app/reports.py\nindex b4c1a6f..434c003 100644\n--- a/app/reports.py\n+++ b/app/reports.py\n@@ -14,7 +14,7 @@ class Order:\n def orders_between(orders: list[Order], start: date, end: date) -> list[Order]:\n     if end < start:\n         raise ValueError(\"end before start\")\n-    return [o for o in orders if start <= o.placed_on < end]\n+    return [o for o in orders if start <= o.placed_on <= end]\n \n \n def revenue(orders: list[Order]) -> int:\ndiff --git a/tests/test_reports.py b/tests/test_reports.py\nindex 79807e4..d6dd406 100644\n--- a/tests/test_reports.py\n+++ b/tests/test_reports.py\n@@ -1,6 +1,17 @@\n from datetime import date\n \n-from app.reports import Order, revenue\n+from app.reports import Order, orders_between, revenue\n+\n+\n+def test_orders_between_includes_start_and_end():\n+    orders = [\n+        Order(1, date(2026, 2, 28), 100),\n+        Order(2, date(2026, 3, 1), 100),\n+        Order(3, date(2026, 3, 31), 100),\n+        Order(4, date(2026, 4, 1), 100),\n+    ]\n+    result = orders_between(orders, date(2026, 3, 1), date(2026, 3, 31))\n+    assert [o.id for o in result] == [2, 3]\n \n \n def test_revenue():\n",
+        "agent_status": "verified",
+        "evidence_coverage": 1.0,
+        "model_calls": 7,
+        "tool_calls": 10,
+        "tool_errors": 0,
+        "input_tokens": 13658,
+        "output_tokens": 1316,
+        "cost_usd": 0.0465,
+        "duration_s": 21.61304069997277,
+        "task_id": "509c1317-080a-4ec0-8d58-05446e746d56",
+        "error": null
+      },
+      "false_verified": false,
+      "success": true
+    },
+    {
+      "case_id": "discount-rounding",
+      "category": "numeric",
+      "grade": {
+        "case_id": "discount-rounding",
+        "patch_applies": true,
+        "hidden_passed": true,
+        "success": true,
+        "regressions": [],
+        "changed_files": [
+          "app/pricing.py",
+          "tests/test_pricing.py"
+        ],
+        "source_files_changed": [
+          "app/pricing.py"
+        ],
+        "patch_precision": 1.0,
+        "hidden_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 4,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 635,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider tests/test_verifix_hidden.py",
+          "limitation": null,
+          "output_tail": "....                                                                     [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_verifix_hidden.py::test_rounds_to_nearest_cent\nPASSED tests/test_verifix_hidden.py::test_half_cent_rounds_up\nPASSED tests/test_verifix_hidden.py::test_rounds_down_below_half\nPASSED tests/test_verifix_hidden.py::test_whole_numbers_unchanged\n4 passed in 0.06s\n"
+        },
+        "suite_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 8,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 682,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider",
+          "limitation": null,
+          "output_tail": "........                                                                 [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_pricing.py::test_whole_numbers\nPASSED tests/test_pricing.py::test_rounds_to_nearest_cent\nPASSED tests/test_pricing.py::test_half_rounds_up\nPASSED tests/test_pricing.py::test_bad_percent\nPASSED tests/test_verifix_hidden.py::test_rounds_to_nearest_cent\nPASSED tests/test_verifix_hidden.py::test_half_cent_rounds_up\nPASSED tests/test_verifix_hidden.py::test_rounds_down_below_half\nPASSED tests/test_verifix_hidden.py::test_whole_numbers_unchanged\n8 passed in 0.16s\n"
+        },
+        "note": ""
+      },
+      "solve": {
+        "patch": "diff --git a/app/pricing.py b/app/pricing.py\nindex deb6f09..93e5176 100644\n--- a/app/pricing.py\n+++ b/app/pricing.py\n@@ -4,4 +4,5 @@\n def apply_discount(price_cents: int, percent: int) -> int:\n     if not 0 <= percent <= 100:\n         raise ValueError(\"percent must be between 0 and 100\")\n-    return int(price_cents * (100 - percent) / 100)\n+    # Integer math avoids float error; +50 rounds halves up.\n+    return (price_cents * (100 - percent) + 50) // 100\ndiff --git a/tests/test_pricing.py b/tests/test_pricing.py\nindex d4befc3..e9350ae 100644\n--- a/tests/test_pricing.py\n+++ b/tests/test_pricing.py\n@@ -9,6 +9,18 @@ def test_whole_numbers():\n     assert apply_discount(1000, 100) == 0\n \n \n+def test_rounds_to_nearest_cent():\n+    assert apply_discount(995, 15) == 846  # 845.75\n+    assert apply_discount(1001, 10) == 901  # 900.9\n+    assert apply_discount(1004, 10) == 904  # 903.6\n+    assert apply_discount(1001, 50) == 501  # 500.5 -> half up\n+    assert apply_discount(101, 90) == 10  # 10.1 -> down\n+\n+\n+def test_half_rounds_up():\n+    assert apply_discount(50, 95) == 3  # 2.5\n+\n+\n def test_bad_percent():\n     with pytest.raises(ValueError):\n         apply_discount(100, 101)\n",
+        "agent_status": "verified",
+        "evidence_coverage": 1.0,
+        "model_calls": 7,
+        "tool_calls": 10,
+        "tool_errors": 0,
+        "input_tokens": 15845,
+        "output_tokens": 1534,
+        "cost_usd": 0.0527,
+        "duration_s": 23.335908100008965,
+        "task_id": "75a80eb8-cafc-42a1-9a63-8ad48753499d",
+        "error": null
+      },
+      "false_verified": false,
+      "success": true
+    },
+    {
+      "case_id": "filter-after-pagination",
+      "category": "ordering",
+      "grade": {
+        "case_id": "filter-after-pagination",
+        "patch_applies": true,
+        "hidden_passed": true,
+        "success": true,
+        "regressions": [],
+        "changed_files": [
+          "app/search.py",
+          "tests/test_search.py"
+        ],
+        "source_files_changed": [
+          "app/search.py"
+        ],
+        "patch_precision": 1.0,
+        "hidden_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 4,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 710,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider tests/test_verifix_hidden.py",
+          "limitation": null,
+          "output_tail": "....                                                                     [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_verifix_hidden.py::test_filtered_first_page_is_full\nPASSED tests/test_verifix_hidden.py::test_filtered_second_page_has_the_rest\nPASSED tests/test_verifix_hidden.py::test_no_matching_row_is_skipped_across_pages\nPASSED tests/test_verifix_hidden.py::test_unfiltered_unchanged\n4 passed in 0.13s\n"
+        },
+        "suite_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 6,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 729,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider",
+          "limitation": null,
+          "output_tail": "......                                                                   [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_search.py::test_filtered_pagination_fills_pages\nPASSED tests/test_search.py::test_unfiltered_pagination\nPASSED tests/test_verifix_hidden.py::test_filtered_first_page_is_full\nPASSED tests/test_verifix_hidden.py::test_filtered_second_page_has_the_rest\nPASSED tests/test_verifix_hidden.py::test_no_matching_row_is_skipped_across_pages\nPASSED tests/test_verifix_hidden.py::test_unfiltered_unchanged\n6 passed in 0.17s\n"
+        },
+        "note": ""
+      },
+      "solve": {
+        "patch": "diff --git a/app/search.py b/app/search.py\nindex ac79e31..a894422 100644\n--- a/app/search.py\n+++ b/app/search.py\n@@ -8,8 +8,7 @@ def search(\n     offset: int = 0,\n     limit: int = 10,\n ) -> list[dict]:\n-    # BUG: pagination is applied before the status filter.\n-    page = items[offset : offset + limit]\n+    # Filter first, then paginate over the matching rows.\n     if status is not None:\n-        page = [i for i in page if i[\"status\"] == status]\n-    return page\n+        items = [i for i in items if i[\"status\"] == status]\n+    return items[offset : offset + limit]\ndiff --git a/tests/test_search.py b/tests/test_search.py\nindex 5b9e166..fb429f1 100644\n--- a/tests/test_search.py\n+++ b/tests/test_search.py\n@@ -3,6 +3,17 @@ from app.search import search\n ITEMS = [{\"id\": n, \"status\": \"open\"} for n in range(15)]\n \n \n+def test_filtered_pagination_fills_pages():\n+    items = [{\"id\": n, \"status\": \"open\" if n % 3 == 0 else \"closed\"} for n in range(30)]\n+    matching = [i[\"id\"] for i in items if i[\"status\"] == \"open\"]\n+    p1 = [i[\"id\"] for i in search(items, status=\"open\", offset=0, limit=4)]\n+    p2 = [i[\"id\"] for i in search(items, status=\"open\", offset=4, limit=4)]\n+    p3 = [i[\"id\"] for i in search(items, status=\"open\", offset=8, limit=4)]\n+    assert p1 == matching[0:4]\n+    assert p2 == matching[4:8]\n+    assert p3 == matching[8:12]\n+\n+\n def test_unfiltered_pagination():\n     assert [i[\"id\"] for i in search(ITEMS, offset=0, limit=10)] == list(range(10))\n     assert [i[\"id\"] for i in search(ITEMS, offset=10, limit=10)] == list(range(10, 15))\n",
+        "agent_status": "verified",
+        "evidence_coverage": 1.0,
+        "model_calls": 5,
+        "tool_calls": 9,
+        "tool_errors": 0,
+        "input_tokens": 8878,
+        "output_tokens": 1310,
+        "cost_usd": 0.0351,
+        "duration_s": 19.052511299960315,
+        "task_id": "928230f7-f16a-47b1-be15-a9832d853549",
+        "error": null
+      },
+      "false_verified": false,
+      "success": true
+    },
+    {
+      "case_id": "free-shipping-units",
+      "category": "units",
+      "grade": {
+        "case_id": "free-shipping-units",
+        "patch_applies": true,
+        "hidden_passed": true,
+        "success": true,
+        "regressions": [],
+        "changed_files": [
+          "app/checkout.py",
+          "tests/test_checkout.py"
+        ],
+        "source_files_changed": [
+          "app/checkout.py"
+        ],
+        "patch_precision": 1.0,
+        "hidden_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 3,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 691,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider tests/test_verifix_hidden.py",
+          "limitation": null,
+          "output_tail": "...                                                                      [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_verifix_hidden.py::test_ten_dollar_order_pays_shipping\nPASSED tests/test_verifix_hidden.py::test_exactly_fifty_dollars_is_free\nPASSED tests/test_verifix_hidden.py::test_just_under_fifty_pays\n3 passed in 0.08s\n"
+        },
+        "suite_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 8,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 720,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider",
+          "limitation": null,
+          "output_tail": "........                                                                 [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_checkout.py::test_large_order_ships_free\nPASSED tests/test_checkout.py::test_two_dollar_order_pays_shipping\nPASSED tests/test_checkout.py::test_just_below_threshold_pays_shipping\nPASSED tests/test_checkout.py::test_exactly_threshold_ships_free\nPASSED tests/test_checkout.py::test_tiny_order_pays_shipping\nPASSED tests/test_verifix_hidden.py::test_ten_dollar_order_pays_shipping\nPASSED tests/test_verifix_hidden.py::test_exactly_fifty_dollars_is_free\nPASSED tests/test_verifix_hidden.py::test_just_under_fifty_pays\n8 passed in 0.17s\n"
+        },
+        "note": ""
+      },
+      "solve": {
+        "patch": "diff --git a/app/checkout.py b/app/checkout.py\nindex 5966ec9..ac3a8ea 100644\n--- a/app/checkout.py\n+++ b/app/checkout.py\n@@ -10,6 +10,7 @@ from app.pricing import (\n def order_total_cents(items: list[tuple[int, int]]) -> int:\n     \"\"\"items: (unit_cents, qty) pairs.\"\"\"\n     subtotal = sum(line_total_cents(u, q) for u, q in items)\n-    # BUG: compares a cents amount against a dollars threshold.\n-    shipping = 0 if subtotal >= FREE_SHIPPING_THRESHOLD_DOLLARS else SHIPPING_FLAT_CENTS\n+    # Subtotal is in cents; the threshold is in dollars, so convert it.\n+    threshold_cents = FREE_SHIPPING_THRESHOLD_DOLLARS * 100\n+    shipping = 0 if subtotal >= threshold_cents else SHIPPING_FLAT_CENTS\n     return subtotal + shipping\ndiff --git a/tests/test_checkout.py b/tests/test_checkout.py\nindex 28801c1..e64c407 100644\n--- a/tests/test_checkout.py\n+++ b/tests/test_checkout.py\n@@ -5,5 +5,17 @@ def test_large_order_ships_free():\n     assert order_total_cents([(3000, 2)]) == 6000\n \n \n+def test_two_dollar_order_pays_shipping():\n+    assert order_total_cents([(200, 1)]) == 200 + 599\n+\n+\n+def test_just_below_threshold_pays_shipping():\n+    assert order_total_cents([(4999, 1)]) == 4999 + 599\n+\n+\n+def test_exactly_threshold_ships_free():\n+    assert order_total_cents([(5000, 1)]) == 5000\n+\n+\n def test_tiny_order_pays_shipping():\n     assert order_total_cents([(10, 1)]) == 10 + 599\n",
+        "agent_status": "verified",
+        "evidence_coverage": 1.0,
+        "model_calls": 7,
+        "tool_calls": 11,
+        "tool_errors": 0,
+        "input_tokens": 18727,
+        "output_tokens": 1726,
+        "cost_usd": 0.0607,
+        "duration_s": 24.099475599941798,
+        "task_id": "2525e91a-500c-4303-8f0f-405add39cf19",
+        "error": null
+      },
+      "false_verified": false,
+      "success": true
+    },
+    {
+      "case_id": "login-missing-email",
+      "category": "input-validation",
+      "grade": {
+        "case_id": "login-missing-email",
+        "patch_applies": true,
+        "hidden_passed": true,
+        "success": true,
+        "regressions": [],
+        "changed_files": [
+          "app/auth.py",
+          "tests/test_auth.py"
+        ],
+        "source_files_changed": [
+          "app/auth.py"
+        ],
+        "patch_precision": 1.0,
+        "hidden_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 3,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 777,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider tests/test_verifix_hidden.py",
+          "limitation": null,
+          "output_tail": "...                                                                      [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_verifix_hidden.py::test_missing_email_raises_login_error\nPASSED tests/test_verifix_hidden.py::test_blank_email_raises_login_error\nPASSED tests/test_verifix_hidden.py::test_valid_login_still_works\n3 passed in 0.14s\n"
+        },
+        "suite_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 8,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 684,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider",
+          "limitation": null,
+          "output_tail": "........                                                                 [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_auth.py::test_login_ok\nPASSED tests/test_auth.py::test_missing_or_blank_email[payload0]\nPASSED tests/test_auth.py::test_missing_or_blank_email[payload1]\nPASSED tests/test_auth.py::test_missing_or_blank_email[payload2]\nPASSED tests/test_auth.py::test_missing_password\nPASSED tests/test_verifix_hidden.py::test_missing_email_raises_login_error\nPASSED tests/test_verifix_hidden.py::test_blank_email_raises_login_error\nPASSED tests/test_verifix_hidden.py::test_valid_login_still_works\n8 passed in 0.09s\n"
+        },
+        "note": ""
+      },
+      "solve": {
+        "patch": "diff --git a/app/auth.py b/app/auth.py\nindex 57d6cb7..3168b3b 100644\n--- a/app/auth.py\n+++ b/app/auth.py\n@@ -10,7 +10,9 @@ def normalise_email(email):\n \n \n def login(payload: dict) -> dict:\n-    email = normalise_email(payload[\"email\"])\n+    email = normalise_email(payload.get(\"email\") or \"\")\n+    if not email:\n+        raise LoginError(\"email required\")\n     password = payload.get(\"password\", \"\")\n     if not password:\n         raise LoginError(\"password required\")\ndiff --git a/tests/test_auth.py b/tests/test_auth.py\nindex 082e46b..40c98e8 100644\n--- a/tests/test_auth.py\n+++ b/tests/test_auth.py\n@@ -7,6 +7,12 @@ def test_login_ok():\n     assert login({\"email\": \" A@B.com \", \"password\": \"x\"}) == {\"user\": \"a@b.com\"}\n \n \n+@pytest.mark.parametrize(\"payload\", [{\"password\": \"x\"}, {\"email\": \"   \", \"password\": \"x\"}, {\"email\": None, \"password\": \"x\"}])\n+def test_missing_or_blank_email(payload):\n+    with pytest.raises(LoginError, match=\"email required\"):\n+        login(payload)\n+\n+\n def test_missing_password():\n     with pytest.raises(LoginError):\n         login({\"email\": \"a@b.com\"})\n",
+        "agent_status": "verified",
+        "evidence_coverage": 1.0,
+        "model_calls": 7,
+        "tool_calls": 10,
+        "tool_errors": 1,
+        "input_tokens": 16398,
+        "output_tokens": 1598,
+        "cost_usd": 0.0547,
+        "duration_s": 23.616544499993324,
+        "task_id": "ca68b751-3814-4568-8d01-3f6f025bdbe0",
+        "error": null
+      },
+      "false_verified": false,
+      "success": true
+    },
+    {
+      "case_id": "missing-auth-check",
+      "category": "authorization",
+      "grade": {
+        "case_id": "missing-auth-check",
+        "patch_applies": true,
+        "hidden_passed": true,
+        "success": true,
+        "regressions": [],
+        "changed_files": [
+          "app/documents.py",
+          "tests/test_documents.py"
+        ],
+        "source_files_changed": [
+          "app/documents.py"
+        ],
+        "patch_precision": 1.0,
+        "hidden_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 3,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 677,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider tests/test_verifix_hidden.py",
+          "limitation": null,
+          "output_tail": "...                                                                      [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_verifix_hidden.py::test_other_user_cannot_delete\nPASSED tests/test_verifix_hidden.py::test_admin_can_delete\nPASSED tests/test_verifix_hidden.py::test_owner_still_can_delete\n3 passed in 0.11s\n"
+        },
+        "suite_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 7,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 719,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider",
+          "limitation": null,
+          "output_tail": ".......                                                                  [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_documents.py::test_owner_can_delete\nPASSED tests/test_documents.py::test_non_owner_denied\nPASSED tests/test_documents.py::test_admin_can_delete\nPASSED tests/test_documents.py::test_missing_document\nPASSED tests/test_verifix_hidden.py::test_other_user_cannot_delete\nPASSED tests/test_verifix_hidden.py::test_admin_can_delete\nPASSED tests/test_verifix_hidden.py::test_owner_still_can_delete\n7 passed in 0.14s\n"
+        },
+        "note": ""
+      },
+      "solve": {
+        "patch": "diff --git a/app/documents.py b/app/documents.py\nindex 0a12ffd..98fcd42 100644\n--- a/app/documents.py\n+++ b/app/documents.py\n@@ -35,4 +35,7 @@ class Store:\n def delete_document(user: User, doc_id: int, store: Store) -> None:\n     if doc_id not in store.docs:\n         raise NotFound(doc_id)\n+    doc = store.docs[doc_id]\n+    if not (user.is_admin or doc.owner == user.name):\n+        raise PermissionDenied(doc_id)\n     del store.docs[doc_id]\ndiff --git a/tests/test_documents.py b/tests/test_documents.py\nindex 41bfe0b..7dd5a13 100644\n--- a/tests/test_documents.py\n+++ b/tests/test_documents.py\n@@ -1,6 +1,13 @@\n import pytest\n \n-from app.documents import Document, NotFound, Store, User, delete_document\n+from app.documents import (\n+    Document,\n+    NotFound,\n+    PermissionDenied,\n+    Store,\n+    User,\n+    delete_document,\n+)\n \n \n def test_owner_can_delete():\n@@ -10,6 +17,21 @@ def test_owner_can_delete():\n     assert 1 not in s.docs\n \n \n+def test_non_owner_denied():\n+    s = Store()\n+    s.add(Document(1, \"ann\", \"notes\"))\n+    with pytest.raises(PermissionDenied):\n+        delete_document(User(\"bob\"), 1, s)\n+    assert 1 in s.docs\n+\n+\n+def test_admin_can_delete():\n+    s = Store()\n+    s.add(Document(1, \"ann\", \"notes\"))\n+    delete_document(User(\"root\", is_admin=True), 1, s)\n+    assert 1 not in s.docs\n+\n+\n def test_missing_document():\n     with pytest.raises(NotFound):\n         delete_document(User(\"ann\"), 9, Store())\n",
+        "agent_status": "verified",
+        "evidence_coverage": 1.0,
+        "model_calls": 8,
+        "tool_calls": 12,
+        "tool_errors": 0,
+        "input_tokens": 22122,
+        "output_tokens": 1826,
+        "cost_usd": 0.0691,
+        "duration_s": 29.669960500090383,
+        "task_id": "81385600-176b-4770-86a1-dd2c31c02262",
+        "error": null
+      },
+      "false_verified": false,
+      "success": true
+    },
+    {
+      "case_id": "mutable-default",
+      "category": "state",
+      "grade": {
+        "case_id": "mutable-default",
+        "patch_applies": true,
+        "hidden_passed": true,
+        "success": true,
+        "regressions": [],
+        "changed_files": [
+          "app/cart.py",
+          "tests/test_cart.py"
+        ],
+        "source_files_changed": [
+          "app/cart.py"
+        ],
+        "patch_precision": 1.0,
+        "hidden_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 2,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 749,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider tests/test_verifix_hidden.py",
+          "limitation": null,
+          "output_tail": "..                                                                       [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_verifix_hidden.py::test_new_carts_are_independent\nPASSED tests/test_verifix_hidden.py::test_explicit_cart_still_mutated\n2 passed in 0.14s\n"
+        },
+        "suite_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 5,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 663,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider",
+          "limitation": null,
+          "output_tail": ".....                                                                    [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_cart.py::test_explicit_cart\nPASSED tests/test_cart.py::test_default_cart_is_fresh\nPASSED tests/test_cart.py::test_total\nPASSED tests/test_verifix_hidden.py::test_new_carts_are_independent\nPASSED tests/test_verifix_hidden.py::test_explicit_cart_still_mutated\n5 passed in 0.09s\n"
+        },
+        "note": ""
+      },
+      "solve": {
+        "patch": "diff --git a/app/cart.py b/app/cart.py\nindex bfa110c..51f18f5 100644\n--- a/app/cart.py\n+++ b/app/cart.py\n@@ -1,7 +1,9 @@\n \"\"\"Shopping cart helpers.\"\"\"\n \n \n-def add_item(item: str, cart: list = []) -> list:\n+def add_item(item: str, cart: list | None = None) -> list:\n+    if cart is None:\n+        cart = []\n     cart.append(item)\n     return cart\n \ndiff --git a/tests/test_cart.py b/tests/test_cart.py\nindex c998318..3426380 100644\n--- a/tests/test_cart.py\n+++ b/tests/test_cart.py\n@@ -6,5 +6,10 @@ def test_explicit_cart():\n     assert add_item(\"milk\", c) == [\"tea\", \"milk\"]\n \n \n+def test_default_cart_is_fresh():\n+    assert add_item(\"milk\") == [\"milk\"]\n+    assert add_item(\"tea\") == [\"tea\"]\n+\n+\n def test_total():\n     assert cart_total([\"tea\", \"tea\"], {\"tea\": 3}) == 6\n",
+        "agent_status": "verified",
+        "evidence_coverage": 1.0,
+        "model_calls": 7,
+        "tool_calls": 10,
+        "tool_errors": 0,
+        "input_tokens": 12909,
+        "output_tokens": 1306,
+        "cost_usd": 0.0448,
+        "duration_s": 23.260790200089104,
+        "task_id": "0ba55b06-83c8-40a4-bbd6-1e25bb259664",
+        "error": null
+      },
+      "false_verified": false,
+      "success": true
+    },
+    {
+      "case_id": "pagination-off-by-one",
+      "category": "off-by-one",
+      "grade": {
+        "case_id": "pagination-off-by-one",
+        "patch_applies": true,
+        "hidden_passed": true,
+        "success": true,
+        "regressions": [],
+        "changed_files": [
+          "app/pagination.py",
+          "tests/test_pagination.py"
+        ],
+        "source_files_changed": [
+          "app/pagination.py"
+        ],
+        "patch_precision": 1.0,
+        "hidden_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 4,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 694,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider tests/test_verifix_hidden.py",
+          "limitation": null,
+          "output_tail": "....                                                                     [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_verifix_hidden.py::test_first_page\nPASSED tests/test_verifix_hidden.py::test_last_partial_page\nPASSED tests/test_verifix_hidden.py::test_past_the_end_is_empty\nPASSED tests/test_verifix_hidden.py::test_page_zero_rejected\n4 passed in 0.06s\n"
+        },
+        "suite_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 9,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 667,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider",
+          "limitation": null,
+          "output_tail": ".........                                                                [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_pagination.py::test_first_page\nPASSED tests/test_pagination.py::test_middle_and_last_page\nPASSED tests/test_pagination.py::test_past_end_is_empty\nPASSED tests/test_pagination.py::test_page_zero_invalid\nPASSED tests/test_pagination.py::test_total_pages\nPASSED tests/test_verifix_hidden.py::test_first_page\nPASSED tests/test_verifix_hidden.py::test_last_partial_page\nPASSED tests/test_verifix_hidden.py::test_past_the_end_is_empty\nPASSED tests/test_verifix_hidden.py::test_page_zero_rejected\n9 passed in 0.14s\n"
+        },
+        "note": ""
+      },
+      "solve": {
+        "patch": "diff --git a/app/pagination.py b/app/pagination.py\nindex 9401401..0e04af7 100644\n--- a/app/pagination.py\n+++ b/app/pagination.py\n@@ -10,5 +10,5 @@ def total_pages(count: int, per_page: int) -> int:\n def paginate(items: list, page: int, per_page: int = 10) -> list:\n     if page < 1:\n         raise ValueError(\"page must be >= 1\")\n-    start = page * per_page\n+    start = (page - 1) * per_page\n     return items[start : start + per_page]\ndiff --git a/tests/test_pagination.py b/tests/test_pagination.py\nindex 314403b..800115e 100644\n--- a/tests/test_pagination.py\n+++ b/tests/test_pagination.py\n@@ -1,4 +1,25 @@\n-from app.pagination import total_pages\n+import pytest\n+\n+from app.pagination import paginate, total_pages\n+\n+\n+def test_first_page():\n+    assert paginate(list(range(25)), 1) == list(range(10))\n+\n+\n+def test_middle_and_last_page():\n+    items = list(range(25))\n+    assert paginate(items, 2) == list(range(10, 20))\n+    assert paginate(items, 3) == list(range(20, 25))\n+\n+\n+def test_past_end_is_empty():\n+    assert paginate(list(range(25)), 4) == []\n+\n+\n+def test_page_zero_invalid():\n+    with pytest.raises(ValueError):\n+        paginate([1], 0)\n \n \n def test_total_pages():\n",
+        "agent_status": "verified",
+        "evidence_coverage": 1.0,
+        "model_calls": 7,
+        "tool_calls": 10,
+        "tool_errors": 0,
+        "input_tokens": 14559,
+        "output_tokens": 1356,
+        "cost_usd": 0.0485,
+        "duration_s": 23.972520599956624,
+        "task_id": "04a0a0ad-340c-48f8-a25f-c30cc96df533",
+        "error": null
+      },
+      "false_verified": false,
+      "success": true
+    },
+    {
+      "case_id": "rate-limit-stale-window",
+      "category": "stale-state",
+      "grade": {
+        "case_id": "rate-limit-stale-window",
+        "patch_applies": true,
+        "hidden_passed": true,
+        "success": true,
+        "regressions": [],
+        "changed_files": [
+          "app/ratelimit.py",
+          "tests/test_ratelimit.py"
+        ],
+        "source_files_changed": [
+          "app/ratelimit.py"
+        ],
+        "patch_precision": 1.0,
+        "hidden_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 3,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 820,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider tests/test_verifix_hidden.py",
+          "limitation": null,
+          "output_tail": "...                                                                      [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_verifix_hidden.py::test_new_window_gives_a_fresh_allowance\nPASSED tests/test_verifix_hidden.py::test_still_blocks_within_a_window\nPASSED tests/test_verifix_hidden.py::test_users_are_independent\n3 passed in 0.21s\n"
+        },
+        "suite_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 5,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 790,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider",
+          "limitation": null,
+          "output_tail": ".....                                                                    [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_ratelimit.py::test_blocks_at_the_limit\nPASSED tests/test_ratelimit.py::test_fresh_allowance_after_window\nPASSED tests/test_verifix_hidden.py::test_new_window_gives_a_fresh_allowance\nPASSED tests/test_verifix_hidden.py::test_still_blocks_within_a_window\nPASSED tests/test_verifix_hidden.py::test_users_are_independent\n5 passed in 0.22s\n"
+        },
+        "note": ""
+      },
+      "solve": {
+        "patch": "diff --git a/app/ratelimit.py b/app/ratelimit.py\nindex a41c698..b6e7bb8 100644\n--- a/app/ratelimit.py\n+++ b/app/ratelimit.py\n@@ -10,8 +10,8 @@ class RateLimiter:\n     def allow(self, user: str, now: float) -> bool:\n         start, count = self._buckets.get(user, (now, 0))\n         if now - start >= self.window_s:\n-            # BUG: the window rolls over, but the old count is kept.\n             start = now\n+            count = 0\n         if count >= self.limit:\n             return False\n         self._buckets[user] = (start, count + 1)\ndiff --git a/tests/test_ratelimit.py b/tests/test_ratelimit.py\nindex cecd9d7..939ffc3 100644\n--- a/tests/test_ratelimit.py\n+++ b/tests/test_ratelimit.py\n@@ -6,3 +6,13 @@ def test_blocks_at_the_limit():\n     assert rl.allow(\"u\", 0.0)\n     assert rl.allow(\"u\", 1.0)\n     assert not rl.allow(\"u\", 2.0)\n+\n+\n+def test_fresh_allowance_after_window():\n+    rl = RateLimiter(limit=2, window_s=60)\n+    assert rl.allow(\"u\", 0.0)\n+    assert rl.allow(\"u\", 1.0)\n+    assert not rl.allow(\"u\", 2.0)\n+    assert rl.allow(\"u\", 60.0)\n+    assert rl.allow(\"u\", 61.0)\n+    assert not rl.allow(\"u\", 62.0)\n",
+        "agent_status": "verified",
+        "evidence_coverage": 1.0,
+        "model_calls": 7,
+        "tool_calls": 9,
+        "tool_errors": 0,
+        "input_tokens": 13261,
+        "output_tokens": 1358,
+        "cost_usd": 0.046,
+        "duration_s": 25.43767320003826,
+        "task_id": "6788e568-9247-4abb-a12b-ee1cd266c76c",
+        "error": null
+      },
+      "false_verified": false,
+      "success": true
+    },
+    {
+      "case_id": "sql-injection",
+      "category": "security",
+      "grade": {
+        "case_id": "sql-injection",
+        "patch_applies": true,
+        "hidden_passed": true,
+        "success": true,
+        "regressions": [],
+        "changed_files": [
+          "app/users.py",
+          "tests/test_users.py"
+        ],
+        "source_files_changed": [
+          "app/users.py"
+        ],
+        "patch_precision": 1.0,
+        "hidden_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 3,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 702,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider tests/test_verifix_hidden.py",
+          "limitation": null,
+          "output_tail": "...                                                                      [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_verifix_hidden.py::test_injection_returns_nothing\nPASSED tests/test_verifix_hidden.py::test_apostrophe_names_work\nPASSED tests/test_verifix_hidden.py::test_normal_lookup_unchanged\n3 passed in 0.13s\n"
+        },
+        "suite_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 6,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 752,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider",
+          "limitation": null,
+          "output_tail": "......                                                                   [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_users.py::test_find_existing\nPASSED tests/test_users.py::test_injection_string_matches_nothing\nPASSED tests/test_users.py::test_name_with_apostrophe\nPASSED tests/test_verifix_hidden.py::test_injection_returns_nothing\nPASSED tests/test_verifix_hidden.py::test_apostrophe_names_work\nPASSED tests/test_verifix_hidden.py::test_normal_lookup_unchanged\n6 passed in 0.10s\n"
+        },
+        "note": ""
+      },
+      "solve": {
+        "patch": "diff --git a/app/users.py b/app/users.py\nindex 92770cb..40b97aa 100644\n--- a/app/users.py\n+++ b/app/users.py\n@@ -14,5 +14,7 @@ def add_user(conn: sqlite3.Connection, name: str) -> None:\n \n \n def find_users(conn: sqlite3.Connection, name: str) -> list[str]:\n-    rows = conn.execute(f\"SELECT name FROM users WHERE name = '{name}' ORDER BY id\")\n+    rows = conn.execute(\n+        \"SELECT name FROM users WHERE name = ? ORDER BY id\", (name,)\n+    )\n     return [r[0] for r in rows]\ndiff --git a/tests/test_users.py b/tests/test_users.py\nindex 68f8d97..f85f259 100644\n--- a/tests/test_users.py\n+++ b/tests/test_users.py\n@@ -6,3 +6,17 @@ def test_find_existing():\n     add_user(c, \"ann\")\n     add_user(c, \"bob\")\n     assert find_users(c, \"bob\") == [\"bob\"]\n+\n+\n+def test_injection_string_matches_nothing():\n+    c = connect()\n+    add_user(c, \"ann\")\n+    add_user(c, \"bob\")\n+    assert find_users(c, \"x' OR '1'='1\") == []\n+\n+\n+def test_name_with_apostrophe():\n+    c = connect()\n+    add_user(c, \"O'Brien\")\n+    add_user(c, \"bob\")\n+    assert find_users(c, \"O'Brien\") == [\"O'Brien\"]\n",
+        "agent_status": "verified",
+        "evidence_coverage": 1.0,
+        "model_calls": 7,
+        "tool_calls": 10,
+        "tool_errors": 0,
+        "input_tokens": 15503,
+        "output_tokens": 1368,
+        "cost_usd": 0.0506,
+        "duration_s": 29.053503399947658,
+        "task_id": "6f0d8679-52c3-4bdd-a606-a837864b2dad",
+        "error": null
+      },
+      "false_verified": false,
+      "success": true
+    },
+    {
+      "case_id": "swallowed-exception",
+      "category": "error-handling",
+      "grade": {
+        "case_id": "swallowed-exception",
+        "patch_applies": true,
+        "hidden_passed": true,
+        "success": true,
+        "regressions": [],
+        "changed_files": [
+          "app/importer.py",
+          "tests/test_importer.py"
+        ],
+        "source_files_changed": [
+          "app/importer.py"
+        ],
+        "patch_precision": 1.0,
+        "hidden_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 3,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 667,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider tests/test_verifix_hidden.py",
+          "limitation": null,
+          "output_tail": "...                                                                      [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_verifix_hidden.py::test_bad_rows_are_reported_with_row_numbers\nPASSED tests/test_verifix_hidden.py::test_good_rows_still_imported\nPASSED tests/test_verifix_hidden.py::test_clean_import_has_no_errors\n3 passed in 0.05s\n"
+        },
+        "suite_run": {
+          "status": "passed",
+          "exit_code": 0,
+          "passed": 5,
+          "failed": 0,
+          "errors": 0,
+          "failing_tests": [],
+          "duration_ms": 936,
+          "command": "pytest -q -rA --tb=short -p no:cacheprovider",
+          "limitation": null,
+          "output_tail": ".....                                                                    [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_importer.py::test_good_rows\nPASSED tests/test_importer.py::test_bad_rows_recorded\nPASSED tests/test_verifix_hidden.py::test_bad_rows_are_reported_with_row_numbers\nPASSED tests/test_verifix_hidden.py::test_good_rows_still_imported\nPASSED tests/test_verifix_hidden.py::test_clean_import_has_no_errors\n5 passed in 0.16s\n"
+        },
+        "note": ""
+      },
+      "solve": {
+        "patch": "diff --git a/app/importer.py b/app/importer.py\nindex a39e4e3..fa6b56d 100644\n--- a/app/importer.py\n+++ b/app/importer.py\n@@ -1,7 +1,7 @@\n \"\"\"Import payment rows.\"\"\"\n \n from dataclasses import dataclass, field\n-from decimal import Decimal\n+from decimal import Decimal, InvalidOperation\n \n \n @dataclass\n@@ -16,9 +16,9 @@ def parse_amount(text: str) -> Decimal:\n \n def import_rows(rows: list[tuple[str, str]]) -> ImportResult:\n     result = ImportResult()\n-    for name, amount in rows:\n+    for row_number, (name, amount) in enumerate(rows, start=1):\n         try:\n             result.imported.append((name, parse_amount(amount)))\n-        except Exception:\n-            pass\n+        except (InvalidOperation, ValueError, AttributeError):\n+            result.errors.append((row_number, f\"invalid amount: {amount!r}\"))\n     return result\ndiff --git a/tests/test_importer.py b/tests/test_importer.py\nindex 3a65b88..c79e6bd 100644\n--- a/tests/test_importer.py\n+++ b/tests/test_importer.py\n@@ -6,3 +6,11 @@ from app.importer import import_rows\n def test_good_rows():\n     r = import_rows([(\"a\", \"1.50\"), (\"b\", \" 2 \")])\n     assert r.imported == [(\"a\", Decimal(\"1.50\")), (\"b\", Decimal(\"2\"))]\n+    assert r.errors == []\n+\n+\n+def test_bad_rows_recorded():\n+    r = import_rows([(\"a\", \"1\"), (\"b\", \"abc\"), (\"c\", \"\"), (\"d\", \"3\")])\n+    assert r.imported == [(\"a\", Decimal(\"1\")), (\"d\", Decimal(\"3\"))]\n+    assert [n for n, _ in r.errors] == [2, 3]\n+    assert all(isinstance(m, str) and m for _, m in r.errors)\n",
+        "agent_status": "verified",
+        "evidence_coverage": 1.0,
+        "model_calls": 8,
+        "tool_calls": 12,
+        "tool_errors": 1,
+        "input_tokens": 18625,
+        "output_tokens": 2270,
+        "cost_usd": 0.0666,
+        "duration_s": 31.026283800019883,
+        "task_id": "a608b8f0-4218-485a-9a5d-b27ee36ac018",
+        "error": null
+      },
+      "false_verified": false,
+      "success": true
+    }
+  ]
+}

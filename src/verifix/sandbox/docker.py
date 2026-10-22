@@ -196,15 +196,6 @@ class DockerSandbox:
 
     async def ensure_runtime(self, *, allow_install: bool) -> EnvResult:
         """Image for no-dependency repos: the base image if it has pytest, else base+pytest."""
-        if not self._image_exists(self.base_image) and not allow_install:
-            return EnvResult(
-                False,
-                None,
-                False,
-                True,
-                limitation=f"base image {self.base_image} is not present; run "
-                "`python -m verifix setup-sandbox` once (or approve prepare_environment)",
-            )
         if self._image_exists(self.runtime_tag):
             return EnvResult(True, self.runtime_tag, False, False, log_tail="runtime image ready")
         if self._image_exists(self.base_image) and self._has_pytest(self.base_image):

@@ -1,0 +1,5 @@
+id = "free-shipping-units"
+title = "Two-dollar orders are shipping for free"
+category = "units"
+request = "Nearly every order is getting free shipping, even $2 ones. Free shipping must start at exactly $50.00; below that, orders pay the flat 599-cent fee. All money in this codebase is integer cents unless the name says otherwise."
+expected_files = ["app/checkout.py"]
